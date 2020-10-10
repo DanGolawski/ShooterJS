@@ -1,14 +1,17 @@
 window.onload = () => {
+    // CANVAS
     let canvas = document.querySelector('#canvas');
     let ctx = canvas.getContext('2d');
     canvas.width = 1000;
     canvas.height = 500;
 
+    // SHOOTER
     let shooterImage = new Image();
     shooterImage.src = 'images/hero.png';
     let shooterReady = false;
     let shooterImageWidth;
     let shooterImageHeight;
+    let shooter;
     shooterImage.onload = () => {
         shooterImageWidth = shooterImage.width;
         shooterImageHeight = shooterImage.height;
@@ -16,21 +19,20 @@ window.onload = () => {
         shooterReady = true;
     }
 
+    // MONSTERS
     let monsterImage = new Image();
     monsterImage.src = 'images/monster.png';
     let monsterReady = false;
     let monsterImageWidth;
     let monsterImageHeight;
     let allowNextMonster = true;
-    let shooter;
     monsterImage.onload = () => {
         monsterImageWidth = monsterImage.width;
         monsterImageHeight = monsterImage.height;
         monsterReady = true;
     }
 
-    // the list where shoots objects are stored 
-    // let shoots = [];
+    // the lists where shoots objects are stored 
     let shooterShoots = [];
     let monsterShoots = [];
     // allows to shoot only when the key is up
@@ -62,6 +64,7 @@ window.onload = () => {
         requestAnimationFrame(render);
     }
 
+    // creates shooter when image is already loaded
     function createShooter() {
         shooter = {
             type: 'shooter',
@@ -144,7 +147,6 @@ window.onload = () => {
     }
 
     function createNewShoot(shooterObj, speed_x, speed_y) {
-        console.log(shooterObj.width, shooterObj.height)
         return {
             x: shooterObj.x + shooterObj.width / 2,
             y: shooterObj.y + shooterObj.height / 2,
@@ -185,7 +187,6 @@ window.onload = () => {
                 monsterShoots.splice(idx, 1);
             }
         }
-        // console.log('shooter : ', shooterShoots.length, 'monsters : ', monsterShoots.length);
     }
 
     function checkShootPos(shoot) {
@@ -196,10 +197,12 @@ window.onload = () => {
         return (currX > 0 && currX < canvW) && (currY > 0 && currY < canvH);
     }
 
+    // allows creating monsters when its time to do it
     function allowMonsterAppear() {
         setInterval(() => { allowNextMonster = true }, monsterInterval);
     }
 
+    // adds new monster when flag is on 'true' and image is loaded
     function addMonsters() {
         if (allowNextMonster && monsterReady) {
             addNewMonster();
@@ -217,7 +220,6 @@ window.onload = () => {
             monsters[idx].move();
             monsters[idx].draw();
             monsters[idx].shoot();
-
         }
     }
 
@@ -243,10 +245,13 @@ window.onload = () => {
             width: monsterImageWidth,
             height: monsterImageHeight,
             life: 10,
+            motion: true,
             shootBlock: false,
             move() {
-                this.x = this.x > shooter.x ? this.x - 1 : this.x + 1;
-                this.y = this.y > shooter.y ? this.y - 1 : this.y + 1;
+                if (this.motion) {
+                    this.x = this.x > shooter.x ? this.x - 1 : this.x + 1;
+                    this.y = this.y > shooter.y ? this.y - 1 : this.y + 1;
+                }
             },
             shoot() {
                 if (Math.abs(this.x - shooter.x) >= Math.abs(this.y - shooter.y)) {
@@ -278,33 +283,39 @@ window.onload = () => {
                 if (monsterReady) {
                     ctx.drawImage(monsterImage, this.x, this.y);
                 }
-
+            },
+            stop() {
+                this.motion = false;
+                setTimeout(() => this.motion = true, 200);
             }
 
         }
     }
 
     function checkIfMonstersShot() {
-        for (let monster of monsters) {
-            const monstX1 = monster.x;
-            const monstX2 = monster.x + monsterImage.width;
-            const monstY1 = monster.y;
-            const monstY2 = monster.y + monsterImage.height;
-            ctx.beginPath();
-            ctx.moveTo(monstX1, monstY1);
-            ctx.lineTo(monstX2, monstY2);
-            ctx.stroke();
-            // monster.life -= countShoots(monster.x, monster.y, tolleranceX, tolleranceY);
+        for (let idx in monsters) {
+            const x1 = monsters[idx].x;
+            const x2 = monsters[idx].x + monsters[idx].width;
+            const y1 = monsters[idx].y;
+            const y2 = monsters[idx].y + monsters[idx].height;
+            const shotCount = countShoots(x1, x2, y1, y2);
+            if (shotCount > 0) {
+                monsters[idx].life -= shotCount;
+                monsters[idx].stop();
+            }
+            if (monsters[idx].life === 0) {
+                monsters.splice(idx, 1);
+            }
         }
     }
 
-    function countShoots(objX, objY, tolleranceX, tolleranceY) {
+    function countShoots(x1, x2, y1, y2) {
         let shotCounter = 0;
-        for (let shoot of shooterShoots) {
-            const distanceX = shoot.x - objX;
-            const distanceY = shoot.y - objY;
-            if (distanceX <= tolleranceX && distanceY < tolleranceY) {
+        for (let idx in shooterShoots) {
+            // console.log(x1, x2, shoot.x, '----', y1, y2, shoot.y)
+            if (shooterShoots[idx].x > x1 && shooterShoots[idx].x < x2 && shooterShoots[idx].y > y1 && shooterShoots[idx].y < y2) {
                 shotCounter++;
+                shooterShoots.splice(idx, 1);
             }
         }
         console.log(shotCounter);
