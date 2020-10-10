@@ -4,28 +4,35 @@ window.onload = () => {
     canvas.width = 1000;
     canvas.height = 500;
 
-    let shooterImage = new Image(10, 10)
+    let shooterImage = new Image();
     shooterImage.src = 'images/hero.png';
     let shooterReady = false;
+    let shooterImageWidth;
+    let shooterImageHeight;
     shooterImage.onload = () => {
+        shooterImageWidth = shooterImage.width;
+        shooterImageHeight = shooterImage.height;
+        createShooter();
         shooterReady = true;
     }
 
-    let monsterImage = new Image(10, 10)
+    let monsterImage = new Image();
     monsterImage.src = 'images/monster.png';
     let monsterReady = false;
+    let monsterImageWidth;
+    let monsterImageHeight;
+    let allowNextMonster = true;
+    let shooter;
     monsterImage.onload = () => {
+        monsterImageWidth = monsterImage.width;
+        monsterImageHeight = monsterImage.height;
         monsterReady = true;
     }
 
-    let shooter = {
-        x: canvas.width / 2,
-        y: canvas.height / 2,
-        speed: 10
-    }
-
     // the list where shoots objects are stored 
-    let shoots = [];
+    // let shoots = [];
+    let shooterShoots = [];
+    let monsterShoots = [];
     // allows to shoot only when the key is up
     let shootAllowed = true;
     // the list where monsters objects are stored
@@ -41,7 +48,7 @@ window.onload = () => {
     let downKeyPressed = false;
 
     handleKeyActions();
-    addMonsters();
+    allowMonsterAppear();
     render();
 
     function render() {
@@ -49,8 +56,21 @@ window.onload = () => {
         changeShooterPosition();
         drawShooter();
         drawShoots();
+        addMonsters();
         drawMonsters();
+        checkIfMonstersShot();
         requestAnimationFrame(render);
+    }
+
+    function createShooter() {
+        shooter = {
+            type: 'shooter',
+            x: canvas.width / 2,
+            y: canvas.height / 2,
+            width: shooterImageWidth,
+            height: shooterImageHeight,
+            speed: 10
+        }
     }
 
     function handleKeyActions() {
@@ -117,13 +137,17 @@ window.onload = () => {
 
     function addNewShoot(shooterObj, speedX, speedY) {
         const newShoot = createNewShoot(shooterObj, speedX, speedY);
-        shoots.push(newShoot);
+        switch (shooterObj.type) {
+            case 'shooter': shooterShoots.push(newShoot); break;
+            case 'monster': monsterShoots.push(newShoot); break;
+        }
     }
 
     function createNewShoot(shooterObj, speed_x, speed_y) {
+        console.log(shooterObj.width, shooterObj.height)
         return {
-            x: shooterObj.x,
-            y: shooterObj.y,
+            x: shooterObj.x + shooterObj.width / 2,
+            y: shooterObj.y + shooterObj.height / 2,
             speedX: speed_x,
             speedY: speed_y,
             changePosition() {
@@ -145,15 +169,23 @@ window.onload = () => {
     }
 
     function drawShoots() {
-        for (let idx in shoots) {
-            if (checkShootPos(shoots[idx])) {
-                shoots[idx].changePosition();
+        for (let idx in shooterShoots) {
+            if (checkShootPos(shooterShoots[idx])) {
+                shooterShoots[idx].changePosition();
             }
             else {
-                shoots.splice(idx, 1);
+                shooterShoots.splice(idx, 1);
             }
         }
-        console.log(shoots.length)
+        for (let idx in monsterShoots) {
+            if (checkShootPos(monsterShoots[idx])) {
+                monsterShoots[idx].changePosition();
+            }
+            else {
+                monsterShoots.splice(idx, 1);
+            }
+        }
+        // console.log('shooter : ', shooterShoots.length, 'monsters : ', monsterShoots.length);
     }
 
     function checkShootPos(shoot) {
@@ -164,9 +196,15 @@ window.onload = () => {
         return (currX > 0 && currX < canvW) && (currY > 0 && currY < canvH);
     }
 
+    function allowMonsterAppear() {
+        setInterval(() => { allowNextMonster = true }, monsterInterval);
+    }
+
     function addMonsters() {
-        addNewMonster();
-        setInterval(() => addNewMonster(), monsterInterval);
+        if (allowNextMonster && monsterReady) {
+            addNewMonster();
+            allowNextMonster = false;
+        }
     }
 
     function addNewMonster() {
@@ -199,8 +237,12 @@ window.onload = () => {
             monsterX = Math.floor(Math.random() * canvas.width);
         }
         return {
+            type: 'monster',
             x: monsterX,
             y: monsterY,
+            width: monsterImageWidth,
+            height: monsterImageHeight,
+            life: 10,
             shootBlock: false,
             move() {
                 this.x = this.x > shooter.x ? this.x - 1 : this.x + 1;
@@ -233,13 +275,41 @@ window.onload = () => {
                 }
             },
             draw() {
-                ctx.drawImage(monsterImage, this.x, this.y);
+                if (monsterReady) {
+                    ctx.drawImage(monsterImage, this.x, this.y);
+                }
+
             }
 
         }
     }
 
+    function checkIfMonstersShot() {
+        for (let monster of monsters) {
+            const monstX1 = monster.x;
+            const monstX2 = monster.x + monsterImage.width;
+            const monstY1 = monster.y;
+            const monstY2 = monster.y + monsterImage.height;
+            ctx.beginPath();
+            ctx.moveTo(monstX1, monstY1);
+            ctx.lineTo(monstX2, monstY2);
+            ctx.stroke();
+            // monster.life -= countShoots(monster.x, monster.y, tolleranceX, tolleranceY);
+        }
+    }
 
+    function countShoots(objX, objY, tolleranceX, tolleranceY) {
+        let shotCounter = 0;
+        for (let shoot of shooterShoots) {
+            const distanceX = shoot.x - objX;
+            const distanceY = shoot.y - objY;
+            if (distanceX <= tolleranceX && distanceY < tolleranceY) {
+                shotCounter++;
+            }
+        }
+        console.log(shotCounter);
+        return shotCounter;
+    }
 }
 
 // https://www.codemahal.com/javascript-and-html5-canvas-game-tutorial-code/
