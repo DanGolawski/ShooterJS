@@ -3,7 +3,11 @@ window.onload = () => {
     let canvas = document.querySelector('#canvas');
     let ctx = canvas.getContext('2d');
     canvas.width = 1500;
-    canvas.height = 1000;
+    canvas.height = 500;
+    ctx.font = "30px Georgia";
+
+    let gameIsOver = false;
+    let monsterTimer;
 
     // SHOOTER
     let shooterImage = new Image();
@@ -51,19 +55,67 @@ window.onload = () => {
     let upKeyPressed = false;
     let downKeyPressed = false;
 
-    handleKeyActions();
-    allowMonsterAppear();
-    render();
+    startGame();
+
+    function startGame() {
+        handleKeyActions();
+        allowMonsterAppear();
+        render();
+    }
 
     function render() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+        if (gameIsOver) {
+            return;
+        }
         changeShooterPosition();
         drawShooter();
         drawShoots();
         addMonsters();
         drawMonsters();
         checkIfMonstersShot();
+        checkIfShooterShot();
+        printGameState();
         requestAnimationFrame(render);
+    }
+
+    function printGameState() {
+        if (shooter) {
+            ctx.fillText(`Life : ${shooter.life}`, 35, 20);
+        }
+
+    }
+
+    function checkIfShooterShot() {
+        if (!shooter) {
+            return;
+        }
+        const x1 = shooter.x;
+        const x2 = shooter.x + shooter.width;
+        const y1 = shooter.y;
+        const y2 = shooter.y + shooter.height;
+        shooter.life -= countShootsForShooter(x1, x2, y1, y2);
+        if (shooter.life === 0) {
+            finishGame();
+        }
+    }
+
+    function countShootsForShooter(x1, x2, y1, y2) {
+        let shotCounter = 0;
+        for (let idx in monsterShoots) {
+            if (monsterShoots[idx].x > x1 && monsterShoots[idx].x < x2 && monsterShoots[idx].y > y1 && monsterShoots[idx].y < y2) {
+                shotCounter++
+                monsterShoots.splice(idx, 1);
+            }
+        }
+        return shotCounter;
+    }
+
+    function finishGame() {
+        gameIsOver = true;
+        canvas.style.visibility = 'hidden';
+        document.querySelector('#gameOverWindow').style.visibility = 'visible';
+        clearInterval(monsterTimer);
     }
 
     // creates shooter when image is already loaded
@@ -74,6 +126,7 @@ window.onload = () => {
             y: canvas.height / 2,
             width: shooterImageWidth,
             height: shooterImageHeight,
+            life: 50,
             speed: 10
         }
     }
@@ -201,7 +254,7 @@ window.onload = () => {
 
     // allows creating monsters when its time to do it
     function allowMonsterAppear() {
-        setInterval(() => { allowNextMonster = true }, monsterInterval);
+        monsterTimer = setInterval(() => { allowNextMonster = true }, monsterInterval);
     }
 
     // adds new monster when flag is on 'true' and image is loaded
@@ -303,7 +356,7 @@ window.onload = () => {
             const x2 = monsters[idx].x + monsters[idx].width;
             const y1 = monsters[idx].y;
             const y2 = monsters[idx].y + monsters[idx].height;
-            const shotCount = countShoots(x1, x2, y1, y2);
+            const shotCount = countShootsForMonster(x1, x2, y1, y2);
             if (shotCount > 0) {
                 monsters[idx].life -= shotCount;
                 monsters[idx].stop();
@@ -316,7 +369,7 @@ window.onload = () => {
         }
     }
 
-    function countShoots(x1, x2, y1, y2) {
+    function countShootsForMonster(x1, x2, y1, y2) {
         let shotCounter = 0;
         for (let idx in shooterShoots) {
             // console.log(x1, x2, shoot.x, '----', y1, y2, shoot.y)
@@ -331,7 +384,6 @@ window.onload = () => {
     function changeMonsterNumber() {
         if (monsterNumber < 5) {
             monsterNumber = Math.ceil(0.1 * monstersKilled + 1);
-            console.log('MONSTER NUMBER : ', monsterNumber);
         }
     }
 }
