@@ -2,8 +2,8 @@ window.onload = () => {
     // CANVAS
     let canvas = document.querySelector('#canvas');
     let ctx = canvas.getContext('2d');
-    canvas.width = 1000;
-    canvas.height = 500;
+    canvas.width = 1500;
+    canvas.height = 1000;
 
     // SHOOTER
     let shooterImage = new Image();
@@ -26,6 +26,7 @@ window.onload = () => {
     let monsterImageWidth;
     let monsterImageHeight;
     let allowNextMonster = true;
+    let monstersKilled = 0;
     monsterImage.onload = () => {
         monsterImageWidth = monsterImage.width;
         monsterImageHeight = monsterImage.height;
@@ -41,6 +42,7 @@ window.onload = () => {
     let monsters = [];
     // time when next monster appears
     let monsterInterval = 10000;
+    let monsterNumber = 1.0;
 
 
     // keys pressed
@@ -205,7 +207,10 @@ window.onload = () => {
     // adds new monster when flag is on 'true' and image is loaded
     function addMonsters() {
         if (allowNextMonster && monsterReady) {
-            addNewMonster();
+            const maxNumber = Math.floor(monsterNumber)
+            for (let i = 0; i < maxNumber; i++) {
+                addNewMonster();
+            }
             allowNextMonster = false;
         }
     }
@@ -305,6 +310,8 @@ window.onload = () => {
             }
             if (monsters[idx].life === 0) {
                 monsters.splice(idx, 1);
+                monstersKilled += 1;
+                changeMonsterNumber();
             }
         }
     }
@@ -318,8 +325,14 @@ window.onload = () => {
                 shooterShoots.splice(idx, 1);
             }
         }
-        console.log(shotCounter);
         return shotCounter;
+    }
+
+    function changeMonsterNumber() {
+        if (monsterNumber < 5) {
+            monsterNumber = Math.ceil(0.1 * monstersKilled + 1);
+            console.log('MONSTER NUMBER : ', monsterNumber);
+        }
     }
 }
 
