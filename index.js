@@ -2,6 +2,8 @@ window.onload = () => {
     // CANVAS
     let canvas = document.querySelector('#canvas');
     let ctx = canvas.getContext('2d');
+    const retryButton = document.querySelector('#retryButton');
+    const gameOverWindow = document.querySelector('#gameOverWindow');
     canvas.width = 1500;
     canvas.height = 500;
     ctx.font = "30px Georgia";
@@ -55,19 +57,20 @@ window.onload = () => {
     let upKeyPressed = false;
     let downKeyPressed = false;
 
+    handleKeyActions();
     startGame();
 
     function startGame() {
-        handleKeyActions();
         allowMonsterAppear();
         render();
     }
 
     function render() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        console.log('RENDER gameIsOver', gameIsOver)
         if (gameIsOver) {
             return;
         }
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
         changeShooterPosition();
         drawShooter();
         drawShoots();
@@ -113,9 +116,16 @@ window.onload = () => {
 
     function finishGame() {
         gameIsOver = true;
+        clearArrays();
         canvas.style.visibility = 'hidden';
-        document.querySelector('#gameOverWindow').style.visibility = 'visible';
+        gameOverWindow.style.visibility = 'visible';
         clearInterval(monsterTimer);
+    }
+
+    function clearArrays() {
+        shooterShoots = [];
+        monsterShoots = [];
+        monsters = [];
     }
 
     // creates shooter when image is already loaded
@@ -126,7 +136,7 @@ window.onload = () => {
             y: canvas.height / 2,
             width: shooterImageWidth,
             height: shooterImageHeight,
-            life: 50,
+            life: 10,
             speed: 10
         }
     }
@@ -138,6 +148,14 @@ window.onload = () => {
         document.addEventListener('keyup', event => {
             handleKeys(event, false);
         }, false);
+        retryButton.addEventListener('click', () => {
+            console.log('START GAME');
+            gameOverWindow.style.visibility = 'hidden';
+            canvas.style.visibility = 'visible';
+            createShooter();
+            gameIsOver = false;
+            startGame();
+        });
     }
 
     function handleKeys(event, pressed) {
