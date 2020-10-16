@@ -20,17 +20,48 @@ body {
     background: green;
 }
 
-#gameOverWindow {
+.gameWindow {
     position: absolute;
     width: 80vw;
     height: 80vh;
     left: 10vw;
     top: 10vh;
-    background: url('./images/gameOverScreen.JPG');
     background-position: center;
     background-repeat: no-repeat;
     background-size: cover;
     border-radius: 20px;
+}
+
+#startWindow {
+    background: url('./images/startWindow.JPG');
+    visibility: 'visible';
+}
+
+#gameOverWindow {
+    background: url('./images/gameOverScreen.JPG');
     visibility: hidden;
+}
+
+.gameButton {
+    position: absolute;
+    bottom: 10%;
+    left: 50%;
+    transform: translateX(-50%);
+    -moz-transform: translateX(-50%);
+    -o-transform: translateX(-50%);
+    -ms-transform: translateX(-50%);
+    font-size: 2rem;
+}
+
+#scoreDisplay {
+    text-align: center;
+    top: 50%;
+}
+
+#gameInfo {
+    position: absolute;
+    font-size: 2em;
+    top: 0;
+    left: 5%;
 }
 

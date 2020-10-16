@@ -6,12 +6,22 @@
     <title>SHOOTER JS</title>
     <link rel="stylesheet" type="text/css" href="index.css">
     <script type="text/javascript" src="index.js"></script>
+    <script type="text/javascript" src="Shooter.js"></script>
+    <script type="text/javascript" src="ShootManager.js"></script>
+    <script type="text/javascript" src="MonsterManager.js"></script>
+    <script type="text/javascript" src="Monster.js"></script>
+    <script type="text/javascript" src="Shoot.js"></script>
 </head>
 
 <body>
     <div id="mainContainer">
-        <div id="gameOverWindow">
-            <button id="retryButton">RETRY</button>
+        <span id="gameInfo"></span>
+        <div class="gameWindow" id="startWindow">
+            <button class="gameButton" id="startButton">START</button>
+        </div>
+        <div class="gameWindow" id="gameOverWindow">
+            <h2 id="scoreDisplay"></h2>
+            <button class="gameButton" id="retryButton">RETRY</button>
         </div>
         <canvas id="canvas"></canvas>
     </div>
